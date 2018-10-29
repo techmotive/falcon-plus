@@ -62,7 +62,7 @@ func genAggr(endpointCounter auto_aggr.EndpointCounter) error {
 	numberator := getNumberator(endpointCounter.Counter)
 	denominator := getDenominator(orgTags, endpointCounter.Type)
 	metric := getMetric(endpointCounter.Counter)
-	tags := getNewTags(endpointCounter.Counter)
+	tags := getNewTags(orgTags)
 	dstype := getDstype(endpointCounter.Type)
 	cluster := fp.Cluster{
 		GrpId:       grpId,
