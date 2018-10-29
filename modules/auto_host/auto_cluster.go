@@ -96,7 +96,7 @@ func getGrpinfo(endpoint string) (int64, string, error) {
 }
 
 func getNumberator(counter string) string {
-	return "$($" + counter + ")"
+	return "$(" + counter + ")"
 }
 
 func getDenominator(orgTags, typeStr string) string {
