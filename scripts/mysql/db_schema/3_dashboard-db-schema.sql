@@ -19,6 +19,7 @@
 -- Table structure for table `dashboard_graph`
 --
 
+drop DATABASE dashboard;
 CREATE DATABASE dashboard
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;

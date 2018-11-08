@@ -60,10 +60,10 @@ func genAggr(endpointCounter auto_aggr.EndpointCounter) error {
 
 	orgTags := getOrgTags(endpointCounter.Counter)
 	numberator := getNumberator(endpointCounter.Counter)
-	denominator := getDenominator(orgTags, endpointCounter.Type)
+	denominator := getDenominator(orgTags)
 	metric := getMetric(endpointCounter.Counter)
 	tags := getNewTags(orgTags)
-	dstype := getDstype(endpointCounter.Type)
+	dstype := getDstype(orgTags)
 	cluster := fp.Cluster{
 		GrpId:       grpId,
 		Numerator:   numberator,
@@ -99,10 +99,23 @@ func getNumberator(counter string) string {
 	return "$(" + counter + ")"
 }
 
-func getDenominator(orgTags, typeStr string) string {
-	if !strings.Contains(orgTags, "metricType=counter") {
-		return "$#"
+func getValue(str string) string {
+	kv := strings.Split(str, "=")
+	return strings.TrimSpace(kv[len(kv)-1])
+}
+
+func getDenominator(orgTags string) string {
+	list := strings.Split(orgTags, ",")
+	for _, tag := range list {
+		valueType := getValue(tag)
+		switch valueType {
+		case "75%", "95%", "99%", "max", "mean", "median", "min":
+			return "$#"
+		case "count", "rate", "rate1", "rate15", "rate5", "ratemean":
+			return "1"
+		}
 	}
+	log.Printf("getDenominator fail:%s ", orgTags)
 	return "1"
 }
 
@@ -123,7 +136,7 @@ func getNewTags(orgTags string) string {
 	list := strings.Split(orgTags, ",")
 	newList := []string{}
 	for _, v := range list {
-		if strings.Contains(v, "valueType=count") || strings.Contains(v, "reportType=need_aggr") || strings.Contains(v, "metricType=counter") {
+		if strings.Contains(v, "reportType=need_aggr") || strings.Contains(v, "need_aggr=1") {
 			continue
 		}
 		newList = append(newList, v)
@@ -131,7 +144,14 @@ func getNewTags(orgTags string) string {
 	return strings.Join(newList, ",")
 }
 
-func getDstype(typeStr string) string {
-	//return "GAUGE"
-	return typeStr
+func getDstype(orgTags string) string {
+    /*
+	list := strings.Split(orgTags, ",")
+	for _, v := range list {
+		if strings.TrimSpace(v) == "valueType=rate" {
+		    return "COUNTER"
+		}
+	}
+    */
+	return "GAUGE"
 }

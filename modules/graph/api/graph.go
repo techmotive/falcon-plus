@@ -133,6 +133,9 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 		datas      []*cmodel.RRDData
 		datas_size int
 	)
+    defer func(){
+            log.Printf("graph.query:%+v; graph.resp:%+v \n",param,resp)
+    }()
 
 	// statistics
 	proc.GraphQueryCnt.Incr()
@@ -383,6 +386,9 @@ func (this *Graph) LastRaw(param cmodel.GraphLastParam, resp *cmodel.GraphLastRe
 
 // 非法值: ts=0,value无意义
 func GetLast(endpoint, counter string) *cmodel.RRDData {
+    defer func(){
+            log.Printf("graph.endpoint:%+v; graph.counter:%+v \n",endpoint, counter)
+    }()
 	dsType, step, exists := index.GetTypeAndStep(endpoint, counter)
 	if !exists {
 		return cmodel.NewRRDData(0, 0.0)

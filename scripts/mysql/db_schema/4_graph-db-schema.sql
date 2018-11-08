@@ -1,3 +1,4 @@
+drop DATABASE graph;
 CREATE DATABASE graph
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;

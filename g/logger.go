@@ -20,7 +20,7 @@ import "os"
 import "path"
 
 var (
-	logFileName = "logs/" + path.Base(os.Args[0]) + ".log"
+	logFileName = "log/" + path.Base(os.Args[0]) + ".log"
 	MaxMegaSize = 1000
 	MaxBackups  = 5
 	MaxAgeDays  = 7

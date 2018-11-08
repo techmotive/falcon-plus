@@ -28,7 +28,7 @@ import (
 
 func WorkerRun(item *g.Cluster) {
 	debug := g.Config().Debug
-
+	log.Printf("processing :%+v\n",item)
 	numeratorStr := cleanParam(item.Numerator)
 	denominatorStr := cleanParam(item.Denominator)
 
@@ -134,17 +134,17 @@ func WorkerRun(item *g.Cluster) {
 	}
 
 	if denominator == 0 {
-		log.Println("[W] denominator == 0, id:", item.Id)
+		log.Println("[W] denominator == 0, id: (%v)", item.Id, item)
 		return
 	}
 
 	if validCount == 0 {
-		log.Println("[W] validCount == 0, id:", item.Id)
+		log.Println("[W] validCount == 0, id: (%v)", item.Id,item)
 		return
 	}
 
 	if debug {
-		log.Printf("[D] hostname:all  numerator:%0.4f  denominator:%0.4f  per:%0.4f\n", numerator, denominator, numerator/denominator)
+            log.Printf("[D] item:(%+v)  numerator:%0.4f  denominator:%0.4f  per:%0.4f\n", item,numerator, denominator, numerator/denominator)
 	}
 	sender.Push(item.Endpoint, item.Metric, item.Tags, numerator/denominator, item.DsType, int64(item.Step))
 }
