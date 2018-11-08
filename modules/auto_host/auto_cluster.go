@@ -59,27 +59,96 @@ func genAggr(endpointCounter auto_aggr.EndpointCounter) error {
 	}
 
 	orgTags := getOrgTags(endpointCounter.Counter)
-	numberator := getNumberator(endpointCounter.Counter)
-	denominator := getDenominator(orgTags)
-	metric := getMetric(endpointCounter.Counter)
-	tags := getNewTags(orgTags)
-	dstype := getDstype(orgTags)
-	cluster := fp.Cluster{
-		GrpId:       grpId,
-		Numerator:   numberator,
-		Denominator: denominator,
-		Endpoint:    grpEndpointName,
-		Metric:      metric,
-		Tags:        tags,
-		DsType:      dstype,
-		Step:        endpointCounter.Step,
-		Creator:     autoUser,
+	//for aggr
+	if isNeedCalAggrMetric(endpointCounter.Counter) {
+		numberator := getNumberator(endpointCounter.Counter)
+		denominator := getDenominator(orgTags)
+		metric := getMetric(endpointCounter.Counter)
+		tags := getNewTags(orgTags)
+		dstype := getDstype(orgTags)
+		cluster := fp.Cluster{
+			GrpId:       grpId,
+			Numerator:   numberator,
+			Denominator: denominator,
+			Endpoint:    grpEndpointName,
+			Metric:      metric,
+			Tags:        tags,
+			DsType:      dstype,
+			Step:        endpointCounter.Step,
+			Creator:     autoUser,
+		}
+
+		if err := addCluster(cluster); err != nil {
+			log.Printf("addCluster for aggr fail: %s. %v", err, cluster)
+		} else {
+			log.Printf("addCluster for aggr ok:%v", cluster)
+		}
 	}
 
-	if err := addCluster(cluster); err != nil {
-		log.Printf("addCluster fail: %s", err)
+	//for error ratio
+	if isNeedCalErrorMetric(endpointCounter.Counter) {
+		numberator := getErrRateNumberator(endpointCounter.Counter)
+		denominator := getErrRateDenominator(endpointCounter.Counter)
+        metricDenominator := strings.Trim(denominator,"$()")
+        if !existsMetric(metricDenominator){
+			log.Printf("addCluster for ratio ignore: %s not exists. ", metricDenominator)
+            return nil
+        }
+		metric := getMetric(metricDenominator)
+		tags := getNewTags(orgTags)
+		tags = getErrRateTags(tags)
+		dstype := getDstype(orgTags)
+		cluster := fp.Cluster{
+			GrpId:       grpId,
+			Numerator:   numberator,
+			Denominator: denominator,
+			Endpoint:    ep,  
+			Metric:      metric,
+			Tags:        tags,
+			DsType:      dstype,
+			Step:        endpointCounter.Step,
+			Creator:     autoUser,
+		}
+
+		if err := addCluster(cluster); err != nil {
+			log.Printf("addCluster for ratio fail: %s. %v", err, cluster)
+		} else {
+			log.Printf("addCluster for ratio ok:%v", cluster)
+		}
 	}
 	return nil
+}
+
+func isNeedCalAggrMetric(counter string) bool {
+	return strings.Contains(counter, "need_aggr")
+}
+func isNeedCalErrorMetric(counter string) bool {
+    log.Printf("isNeedCalErrorMetric:%v, 1", counter)
+	if !strings.HasPrefix(counter, "error.") || strings.Contains(counter, "need_aggr") {
+		return false
+	}
+    log.Printf("isNeedCalErrorMetric:%v, 2", counter)
+	list := strings.Split(counter, ",")
+	for _, tag := range list {
+		valueType := getValue(tag)
+		switch valueType {
+		case "rate":
+    log.Printf("isNeedCalErrorMetric:%v, 3", counter)
+			return true
+		}
+	}
+    log.Printf("isNeedCalErrorMetric:%v, 4", counter)
+	return false
+}
+
+func existsMetric(m string) bool {
+    ep := graph.EndpointCounter{Counter: m}
+	if err := db.Graph.Table(ep.TableName()).Where(&ep).First(&ep).Error; err != nil {
+            log.Printf("find %s in graph fail:%v, ",m, err)
+            return false
+	}
+	return  true
+
 }
 
 func addCluster(c fp.Cluster) error {
@@ -104,6 +173,14 @@ func getValue(str string) string {
 	return strings.TrimSpace(kv[len(kv)-1])
 }
 
+func getErrRateNumberator(counter string) string {
+	return "$(" + counter + ")"
+}
+
+func getErrRateDenominator(counter string) string {
+	return "$(" + strings.Replace(strings.TrimPrefix(counter, "error."), "metricType=meter", "metricType=timer", -1) + ")"
+}
+
 func getDenominator(orgTags string) string {
 	list := strings.Split(orgTags, ",")
 	for _, tag := range list {
@@ -117,6 +194,10 @@ func getDenominator(orgTags string) string {
 	}
 	log.Printf("getDenominator fail:%s ", orgTags)
 	return "1"
+}
+
+func getErrRateTags(tags string) string {
+	return strings.Replace(tags, "valueType=rate", "valueType=error_ratio", -1)
 }
 
 func getMetric(counter string) string {
@@ -145,13 +226,13 @@ func getNewTags(orgTags string) string {
 }
 
 func getDstype(orgTags string) string {
-    /*
-	list := strings.Split(orgTags, ",")
-	for _, v := range list {
-		if strings.TrimSpace(v) == "valueType=rate" {
-		    return "COUNTER"
+	/*
+		list := strings.Split(orgTags, ",")
+		for _, v := range list {
+			if strings.TrimSpace(v) == "valueType=rate" {
+			    return "COUNTER"
+			}
 		}
-	}
-    */
+	*/
 	return "GAUGE"
 }
