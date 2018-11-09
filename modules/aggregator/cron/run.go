@@ -60,7 +60,7 @@ func WorkerRun(item *g.Cluster) {
 
 	now := time.Now().Unix()
 
-	valueMap, err := queryCounterLast(numeratorOperands, denominatorOperands, hostnames, now-int64(item.Step*2), now)
+	valueMap,ts, err := queryCounterLast(numeratorOperands, denominatorOperands, hostnames, now-int64(item.Step*2), now)
 	if err != nil {
 		log.Println("[E]", err, item)
 		return
@@ -133,7 +133,17 @@ func WorkerRun(item *g.Cluster) {
 		}
 	}
 
-	if denominator == 0 {
+    result := float64(0)
+
+    if denominator != 0{
+        result = numerator/denominator
+    }
+
+	if debug {
+            log.Printf("[D] item:(%+v)  numerator:%0.4f  denominator:%0.4f  result:%0.4f\n", item,numerator, denominator, result)
+	}
+
+	if denominator == 0 && numerator != 0{
 		log.Println("[W] denominator == 0, id: (%v)", item.Id, item)
 		return
 	}
@@ -143,10 +153,7 @@ func WorkerRun(item *g.Cluster) {
 		return
 	}
 
-	if debug {
-            log.Printf("[D] item:(%+v)  numerator:%0.4f  denominator:%0.4f  per:%0.4f\n", item,numerator, denominator, numerator/denominator)
-	}
-	sender.Push(item.Endpoint, item.Metric, item.Tags, numerator/denominator, item.DsType, int64(item.Step))
+	sender.Push(item.Endpoint, item.Metric, item.Tags, result, item.DsType, int64(item.Step),ts)
 }
 
 func parse(expression string, needCompute bool) (operands []string, operators []string, computeMode string) {

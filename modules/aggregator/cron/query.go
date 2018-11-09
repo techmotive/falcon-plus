@@ -15,10 +15,11 @@
 package cron
 
 import (
+    "time"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/sdk"
 )
 
-func queryCounterLast(numeratorOperands, denominatorOperands, hostnames []string, begin, end int64) (map[string]float64, error) {
+func queryCounterLast(numeratorOperands, denominatorOperands, hostnames []string, begin, end int64) (map[string]float64, int64, error) {
 	counters := []string{}
 
 	counters = append(counters, numeratorOperands...)
@@ -26,9 +27,10 @@ func queryCounterLast(numeratorOperands, denominatorOperands, hostnames []string
 
 	resp, err := sdk.QueryLastPoints(hostnames, counters)
 	if err != nil {
-		return map[string]float64{}, err
+		return map[string]float64{}, 0, err
 	}
 
+	var cnt, ts int64
 	ret := make(map[string]float64)
 	for _, res := range resp {
 		v := res.Value
@@ -36,7 +38,13 @@ func queryCounterLast(numeratorOperands, denominatorOperands, hostnames []string
 			continue
 		}
 		ret[res.Endpoint+res.Counter] = float64(v.Value)
+		cnt++
+		ts += v.Timestamp
 	}
-
-	return ret, nil
+    if cnt > 0 {
+        ts = ts/cnt
+    }else{
+            ts = time.Now().Unix()
+    }
+	return ret, ts, nil
 }
