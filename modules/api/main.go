@@ -30,6 +30,7 @@ import (
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller"
 	"github.com/open-falcon/falcon-plus/modules/api/config"
 	"github.com/open-falcon/falcon-plus/modules/api/graph"
+	gin_log "github.com/open-falcon/falcon-plus/modules/api/gin_log"
 	"github.com/spf13/viper"
 )
 
@@ -76,7 +77,8 @@ func main() {
 	if viper.GetString("log_level") != "debug" {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	routes := gin.Default()
+	routes := gin.New()
+	routes.Use(gin_log.Logger(), gin.Recovery())
 	if viper.GetBool("gen_doc") {
 		yaag.Init(&yaag.Config{
 			On:       true,

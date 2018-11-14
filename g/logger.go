@@ -38,6 +38,7 @@ func InitLog(level string) (err error) {
 	}
 
 	log.SetOutput(rotateLogger)
+    log.SetFormatter(&log.TextFormatter{})
 	switch level {
 	case "info":
 		log.SetLevel(log.InfoLevel)
