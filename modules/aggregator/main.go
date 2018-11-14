@@ -21,6 +21,8 @@ import (
 	"os/signal"
 	"syscall"
 
+
+    logger "github.com/open-falcon/falcon-plus/g"
 	"github.com/open-falcon/falcon-plus/common/sdk/sender"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/cron"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/db"
@@ -53,6 +55,12 @@ func main() {
 	// sdk configuration
 	sender.Debug = g.Config().Debug
 	sender.PostPushUrl = g.Config().Api.PushApi
+        if g.Config().Debug {
+                        logger.InitLog("debug")
+                            } else {
+                                            logger.InitLog("info")
+                                                        }
+
 
 	sender.StartSender()
 

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	//log "github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/open-falcon/falcon-plus/modules/api/app/model/auto_aggr"
 	fp "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
 	"github.com/open-falcon/falcon-plus/modules/api/app/model/graph"
-	"log"
+	//"log"
 )
 
 func genAggregator() {
