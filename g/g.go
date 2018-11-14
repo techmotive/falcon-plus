@@ -36,7 +36,7 @@ func init() {
 		"gateway":    true,
 		"api":        true,
 		"alarm":      true,
-		"auto_host":  true,
+		"auto_cluster":  true,
 	}
 
 	BinOf = map[string]string{
@@ -50,7 +50,7 @@ func init() {
 		"gateway":    "./gateway/bin/falcon-gateway",
 		"api":        "./api/bin/falcon-api",
 		"alarm":      "./alarm/bin/falcon-alarm",
-		"auto_host":  "./auto_host/bin/falcon-auto_host",
+		"auto_cluster":  "./auto_cluster/bin/falcon-auto_cluster",
 	}
 
 	cfgOf = map[string]string{
@@ -64,7 +64,7 @@ func init() {
 		"gateway":    "./gateway/config/cfg.json",
 		"api":        "./api/config/cfg.json",
 		"alarm":      "./alarm/config/cfg.json",
-		"auto_host":  "./auto_host/config/cfg.json",
+		"auto_cluster":  "./auto_cluster/config/cfg.json",
 	}
 
 	ModuleApps = map[string]string{
@@ -78,7 +78,7 @@ func init() {
 		"gateway":    "falcon-gateway",
 		"api":        "falcon-api",
 		"alarm":      "falcon-alarm",
-		"auto_host":  "falcon-auto_host",
+		"auto_cluster":  "falcon-auto_cluster",
 	}
 
 	logpathOf = map[string]string{
@@ -92,7 +92,7 @@ func init() {
 		"gateway":    "./gateway/logs/gateway.log",
 		"api":        "./api/logs/api.log",
 		"alarm":      "./alarm/logs/alarm.log",
-		"auto_host":  "./auto_host/logs/auto_host.log",
+		"auto_cluster":  "./auto_cluster/logs/auto_cluster.log",
 	}
 
 	PidOf = map[string]string{
@@ -106,7 +106,7 @@ func init() {
 		"gateway":    "<NOT SET>",
 		"api":        "<NOT SET>",
 		"alarm":      "<NOT SET>",
-		"auto_host":  "<NOT SET>",
+		"auto_cluster":  "<NOT SET>",
 	}
 
 	// Modules are deployed in this order
@@ -121,7 +121,7 @@ func init() {
 		"gateway",
 		"api",
 		"alarm",
-		"auto_host",
+		"auto_cluster",
 	}
 }
 
