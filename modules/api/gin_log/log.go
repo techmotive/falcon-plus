@@ -2,12 +2,13 @@ package log
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/lestrrat/go-file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	"os"
-	"time"
 )
 
 func Logger() gin.HandlerFunc {

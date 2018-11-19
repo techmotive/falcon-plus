@@ -173,9 +173,23 @@ func findEndpointIdByEndpointList(hosts []string) []int64 {
 	return hostIds
 }
 
+func stripTags(c string) string {
+	list := strings.Split(c, "/")
+	if len(list) < 2 {
+		return c
+	}
+	return strings.Join(list[0:len(list)-1], "/")
+}
+
 //for reture counter list of endpoints
 func responseCounterRegexp(regexpKey string) (result []APIGrafanaMainQueryOutputs) {
 	result = []APIGrafanaMainQueryOutputs{}
+	hint := "#without_tags"
+	without_tags := false
+	if strings.Contains(regexpKey, hint) {
+		without_tags = true
+		regexpKey = strings.TrimSuffix(regexpKey, hint)
+	}
 	hosts, counter := cutEndpointCounterHelp(regexpKey)
 	if len(hosts) == 0 || counter == "" {
 		return
@@ -195,6 +209,9 @@ func responseCounterRegexp(regexpKey string) (result []APIGrafanaMainQueryOutput
 		return
 	}
 	for _, c := range counters {
+		if without_tags {
+			c.Counter = stripTags(c.Counter)
+		}
 		expsub, needexp := expandableChecking(c.Counter, counter)
 		result = append(result, APIGrafanaMainQueryOutputs{
 			Text:       expsub,
