@@ -29,8 +29,8 @@ import (
 	"github.com/open-falcon/falcon-plus/g"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller"
 	"github.com/open-falcon/falcon-plus/modules/api/config"
-	"github.com/open-falcon/falcon-plus/modules/api/graph"
 	gin_log "github.com/open-falcon/falcon-plus/modules/api/gin_log"
+	"github.com/open-falcon/falcon-plus/modules/api/graph"
 	"github.com/spf13/viper"
 )
 

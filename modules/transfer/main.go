@@ -17,12 +17,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+
+	log "github.com/open-falcon/falcon-plus/g"
 	"github.com/open-falcon/falcon-plus/modules/transfer/g"
 	"github.com/open-falcon/falcon-plus/modules/transfer/http"
 	"github.com/open-falcon/falcon-plus/modules/transfer/proc"
 	"github.com/open-falcon/falcon-plus/modules/transfer/receiver"
 	"github.com/open-falcon/falcon-plus/modules/transfer/sender"
-	"os"
 )
 
 func main() {
@@ -42,6 +44,11 @@ func main() {
 
 	// global config
 	g.ParseConfig(*cfg)
+	err := log.InitLog("debug")
+	if err != nil {
+		fmt.Printf("InitLog fail:%s", err)
+		return
+	}
 	// proc
 	proc.Start()
 
