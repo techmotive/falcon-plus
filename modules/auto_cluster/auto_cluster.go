@@ -54,9 +54,9 @@ func genAggr(endpointCounter auto_aggr.EndpointCounter) error {
 	}
 
 	orgTags := getOrgTags(endpointCounter.Counter)
-    if !filter(orgTags){
-            return fmt.Errorf("filter out tags type:%s",orgTags)
-    }
+	if !filter(orgTags) {
+		return fmt.Errorf("filter out tags type:%s", orgTags)
+	}
 	//for aggr
 	if isNeedCalAggrMetric(endpointCounter.Counter) {
 
@@ -194,7 +194,7 @@ func filter(orgTags string) bool {
 	for _, tag := range list {
 		valueType := getValue(tag)
 		switch valueType {
-		case   "rate15", "rate5", "ratemean":
+		case "rate15", "rate5", "ratemean":
 			return false
 		}
 	}
@@ -208,7 +208,7 @@ func getDenominator(orgTags string) string {
 		switch valueType {
 		case "75%", "95%", "99%", "max", "mean", "median", "min":
 			return "$#"
-		case "count", "rate", "rate1", "rate15", "rate5", "ratemean":
+		case "count", "interval_count", "rate", "rate1", "rate15", "rate5", "ratemean":
 			return "1"
 		}
 	}
@@ -237,7 +237,7 @@ func getNewTags(orgTags string) string {
 	list := strings.Split(orgTags, ",")
 	newList := []string{}
 	for _, v := range list {
-		if strings.Contains(v, "reportType=need_aggr") || strings.Contains(v, "need_aggr=1") {
+		if strings.Contains(v, "need_aggr") {
 			continue
 		}
 		newList = append(newList, v)
