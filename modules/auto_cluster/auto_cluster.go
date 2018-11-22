@@ -186,7 +186,7 @@ func getErrRateNumberator(counter string) string {
 }
 
 func getErrRateDenominator(counter string) string {
-	return "$(" + strings.Replace(strings.TrimPrefix(counter, "error."), "metricType=meter", "metricType=timer", -1) + ")"
+	return "$(" + strings.Replace(strings.TrimPrefix(counter, "error."), "metricType=meter", "metricType=histogram", -1) + ")"
 }
 
 func filter(orgTags string) bool {
@@ -194,6 +194,8 @@ func filter(orgTags string) bool {
 	for _, tag := range list {
 		valueType := getValue(tag)
 		switch valueType {
+		case "75%", "95%", "median":
+			return false
 		case "rate15", "rate5", "ratemean":
 			return false
 		}

@@ -28,20 +28,25 @@ import (
 
 func WorkerRun(item *g.Cluster) {
 	debug := g.Config().Debug
-	log.Printf("processing :%+v\n",item)
+	if debug {
+		log.Printf("processing :%+v\n", item)
+	}
 	numeratorStr := cleanParam(item.Numerator)
 	denominatorStr := cleanParam(item.Denominator)
 
-	if !expressionValid(numeratorStr) || !expressionValid(denominatorStr) {
-		log.Println("[W] invalid numerator or denominator", item)
-		return
-	}
+	/*	if !expressionValid(numeratorStr) || !expressionValid(denominatorStr) {
+			log.Println("[W] invalid numerator or denominator", item)
+			return
+		}
+	*/
 
 	needComputeNumerator := needCompute(numeratorStr)
 	needComputeDenominator := needCompute(denominatorStr)
 
 	if !needComputeNumerator && !needComputeDenominator {
-		log.Println("[W] no need compute", item)
+		if debug {
+			log.Println("[W] no need compute", item)
+		}
 		return
 	}
 
@@ -60,7 +65,7 @@ func WorkerRun(item *g.Cluster) {
 
 	now := time.Now().Unix()
 
-	valueMap,ts, err := queryCounterLast(numeratorOperands, denominatorOperands, hostnames, now-int64(item.Step*2), now)
+	valueMap, ts, err := queryCounterLast(numeratorOperands, denominatorOperands, hostnames, now-int64(item.Step*2), now)
 	if err != nil {
 		log.Println("[E]", err, item)
 		return
@@ -133,27 +138,31 @@ func WorkerRun(item *g.Cluster) {
 		}
 	}
 
-    result := float64(0)
+	result := float64(0)
 
-    if denominator != 0{
-        result = numerator/denominator
-    }
-
-	if debug {
-            log.Printf("[D] item:(%+v)  numerator:%0.4f  denominator:%0.4f  result:%0.4f\n", item,numerator, denominator, result)
+	if denominator != 0 {
+		result = numerator / denominator
 	}
 
-	if denominator == 0 && numerator != 0{
-		log.Println("[W] denominator == 0, id: (%v)", item.Id, item)
+	if debug {
+		log.Printf("[D] item:(%+v)  numerator:%0.4f  denominator:%0.4f  result:%0.4f\n", item, numerator, denominator, result)
+	}
+
+	if denominator == 0 && numerator != 0 {
+		if debug {
+			log.Println("[W] denominator == 0, id: (%v)", item.Id, item)
+		}
 		return
 	}
 
 	if validCount == 0 {
-		log.Println("[W] validCount == 0, id: (%v)", item.Id,item)
+		if debug {
+			log.Println("[W] validCount == 0, id: (%v)", item.Id, item)
+		}
 		return
 	}
 
-	sender.Push(item.Endpoint, item.Metric, item.Tags, result, item.DsType, int64(item.Step),ts)
+	sender.Push(item.Endpoint, item.Metric, item.Tags, result, item.DsType, int64(item.Step), ts)
 }
 
 func parse(expression string, needCompute bool) (operands []string, operators []string, computeMode string) {

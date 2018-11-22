@@ -1,14 +1,15 @@
 package log
 
 import (
-	"time"
+	//"time"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/Sirupsen/logrus"
+	//log "github.com/Sirupsen/logrus"
 )
 
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
+        /*
 		// 开始时间
 		start := time.Now()
 		// 处理请求
@@ -23,11 +24,13 @@ func Logger() gin.HandlerFunc {
 		clientIP := c.ClientIP()
 		method := c.Request.Method
 		statusCode := c.Writer.Status()
+
 		log.Infof("| %3d | %13v | %15s | %s  %s |",
 			statusCode,
 			latency,
 			clientIP,
 			method, path,
 		)
+        */
 	}
 }

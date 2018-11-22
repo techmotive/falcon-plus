@@ -17,6 +17,8 @@ package cron
 import (
 	log "github.com/Sirupsen/logrus"
 	"time"
+	"fmt"
+	"math/rand"
 
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 )
@@ -29,7 +31,6 @@ type Worker struct {
 
 func NewWorker(ci *g.Cluster) Worker {
 	w := Worker{}
-	w.Ticker = time.NewTicker(time.Duration(ci.Step) * time.Second)
 	w.Quit = make(chan struct{})
 	w.ClusterItem = ci
 	return w
@@ -37,6 +38,9 @@ func NewWorker(ci *g.Cluster) Worker {
 
 func (this Worker) Start() {
 	go func() {
+        fmt.Printf("I sleep for %d seconds then start.(%+v)\n",rand.Intn(this.ClusterItem.Step),this.ClusterItem)
+        time.Sleep(time.Millisecond * time.Duration(rand.Intn(1000*this.ClusterItem.Step)))
+	    this.Ticker = time.NewTicker(time.Duration(this.ClusterItem.Step) * time.Second)
 		for {
 			select {
 			case <-this.Ticker.C:
