@@ -239,6 +239,12 @@ func getNewTags(orgTags string) string {
 	list := strings.Split(orgTags, ",")
 	newList := []string{}
 	for _, v := range list {
+		if strings.Contains(v, "valueType") {
+			continue
+		}
+		if strings.Contains(v, "metricType") {
+			v = "metricType=error_ratio"
+		}
 		if strings.Contains(v, "need_aggr") {
 			continue
 		}
