@@ -186,7 +186,7 @@ func getErrRateNumberator(counter string) string {
 }
 
 func getErrRateDenominator(counter string) string {
-	return "$(" + strings.Replace(strings.TrimPrefix(counter, "error."), "metricType=meter", "metricType=histogram", -1) + ")"
+	return "$(" + strings.Replace(strings.TrimPrefix(counter, "error."), "metricType=counter", "metricType=histogram", -1) + ")"
 }
 
 func filter(orgTags string) bool {
