@@ -97,14 +97,16 @@ func genAggr(endpointCounter auto_aggr.EndpointCounter) error {
 		log.Printf("grpid:%d,grpEndpoint:%s,ep:%s for error_ratio", grpId, grpEndpointName, ep)
 		numberator := getErrRateNumberator(endpointCounter.Counter)
 		denominator := getErrRateDenominator(endpointCounter.Counter)
-		metricDenominator := strings.Trim(denominator, "$()")
-		if !existsMetric(metricDenominator) {
-			log.Printf("addCluster for ratio ignore: %s not exists. ", metricDenominator)
-			return nil
+        metricDenominator := strings.Trim(denominator, "$()")
+        if !existsMetric(metricDenominator) {
+            if !existsMetric(strings.Replace(metricDenominator, ".business_error","", -1)) {
+                log.Printf("addCluster for ratio ignore: %s not found. ", strings.Replace(metricDenominator, ".business_error","", -1))
+                return fmt.Errorf("addCluster for ratio ignore: %s not found. ", strings.Replace(metricDenominator, ".business_error","", -1))
+            }
+            denominator = getBussinessErrRateDenominator(denominator)
 		}
 		metric := getMetric(metricDenominator)
-		tags := getNewTags(orgTags)
-		tags = getErrRateTags(tags)
+        tags := getErrRateTags(orgTags)
 		dstype := getDstype(orgTags)
 		cluster := fp.Cluster{
 			GrpId:       grpId,
@@ -185,6 +187,10 @@ func getErrRateNumberator(counter string) string {
 	return "$(" + counter + ")"
 }
 
+func getBussinessErrRateDenominator(counter string) string {
+	return "$(" + strings.Replace(strings.Replace(counter, ".business_error","",-1), "metricType=counter", "metricType=histogram", -1) + ")"
+}
+
 func getErrRateDenominator(counter string) string {
 	return "$(" + strings.Replace(strings.TrimPrefix(counter, "error."), "metricType=counter", "metricType=histogram", -1) + ")"
 }
@@ -194,7 +200,7 @@ func filter(orgTags string) bool {
 	for _, tag := range list {
 		valueType := getValue(tag)
 		switch valueType {
-		case "75%", "95%", "median":
+		case "75%", "95%", "median","count":
 			return false
 		case "rate15", "rate5", "ratemean":
 			return false
@@ -219,7 +225,21 @@ func getDenominator(orgTags string) string {
 }
 
 func getErrRateTags(tags string) string {
-	return strings.Replace(tags, "valueType=rate", "valueType=error_ratio", -1)
+	list := strings.Split(tags, ",")
+	newList := []string{}
+	for _, v := range list {
+		if strings.Contains(v, "valueType") {
+			continue
+		}
+		if strings.Contains(v, "metricType") {
+			v = "metricType=error_ratio"
+		}
+		if strings.Contains(v, "need_aggr") {
+			continue
+		}
+		newList = append(newList, v)
+	}
+	return strings.Join(newList, ",")
 }
 
 func getMetric(counter string) string {
@@ -248,13 +268,5 @@ func getNewTags(orgTags string) string {
 }
 
 func getDstype(orgTags string) string {
-	/*
-		list := strings.Split(orgTags, ",")
-		for _, v := range list {
-			if strings.TrimSpace(v) == "valueType=rate" {
-			    return "COUNTER"
-			}
-		}
-	*/
 	return "GAUGE"
 }
