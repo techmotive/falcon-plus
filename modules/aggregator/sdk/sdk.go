@@ -32,13 +32,14 @@ var mapGrpID map[int64][]string
 var lock sync.RWMutex
 
 func init() {
+	mapGrpID = make(map[int64][]string, 1000)
 	initCacheCleaner()
 }
 func initCacheCleaner() {
 	go func() {
 		for range time.Tick(time.Minute) {
 			lock.Lock()
-			mapGrpID = make(map[int64][]string)
+			mapGrpID = make(map[int64][]string, 1000)
 			lock.Unlock()
 		}
 	}()
