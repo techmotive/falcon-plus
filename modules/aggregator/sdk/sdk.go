@@ -31,6 +31,19 @@ import (
 var mapGrpID map[int64][]string
 var lock sync.RWMutex
 
+func init() {
+	initCacheCleaner()
+}
+func initCacheCleaner() {
+	go func() {
+		for range time.Tick(time.Minute) {
+			lock.Lock()
+			mapGrpID = make(map[int64][]string)
+			lock.Unlock()
+		}
+	}()
+}
+
 func HostnamesByID(group_id int64) ([]string, error) {
 
 	lock.RLock()
