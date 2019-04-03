@@ -33,7 +33,7 @@ import (
 func WorkerPreRun(w *Worker) (err error) {
 	errCnt := 0
 	err = errors.New("default")
-	for errCnt < 3 && err != nil {
+	for errCnt < 6 && err != nil {
 		if err = workerPreRun(w); err != nil {
 			errCnt++
 			time.Sleep(time.Duration(errCnt) * time.Second)
