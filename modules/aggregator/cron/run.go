@@ -22,6 +22,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	"fmt"
+
 	"github.com/open-falcon/falcon-plus/common/sdk/sender"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/sdk"
@@ -66,7 +68,7 @@ func WorkerPreRun(w *Worker) error {
 
 	hostnames, err := sdk.HostnamesByID(item.GroupId)
 	if err != nil || len(hostnames) == 0 {
-		return errors.New("invalid GroupId")
+		return fmt.Errorf("invalid GroupId:%d", item.GroupId)
 	}
 	w.hostnames = hostnames
 	return nil
