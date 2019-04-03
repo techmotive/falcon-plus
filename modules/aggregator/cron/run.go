@@ -30,7 +30,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-func WorkerPreRun(w *Worker) error {
+func WorkerPreRun(w *Worker) (err error) {
+	errCnt := 0
+	err = errors.New("default")
+	for errCnt < 3 && err != nil {
+		if err = workerPreRun(w); err != nil {
+			errCnt++
+			time.Sleep(time.Duration(errCnt) * time.Second)
+		}
+	}
+	return
+}
+
+func workerPreRun(w *Worker) error {
 	item := w.ClusterItem
 
 	debug := g.Config().Debug
