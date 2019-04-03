@@ -52,8 +52,8 @@ func NewWorker(ci *g.Cluster) Worker {
 func (this Worker) Start() {
 	go func() {
 
-		if WorkerPreRun(&this) != nil {
-			log.Printf("[E] no need compute(%+v)", this.ClusterItem)
+		if err := WorkerPreRun(&this); err != nil {
+			log.Printf("[E] no need compute(%+v),err:%s", this.ClusterItem, err)
 			return
 		}
 
