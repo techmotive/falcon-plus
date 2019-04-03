@@ -46,18 +46,18 @@ func WorkerPreRun(w *Worker) error {
 	w.numeratorStr = numeratorStr
 	w.denominatorStr = denominatorStr
 
-	needComputeNumerator := needCompute(numeratorStr)
-	needComputeDenominator := needCompute(denominatorStr)
+	w.needComputeNumerator = needCompute(numeratorStr)
+	w.needComputeDenominator = needCompute(denominatorStr)
 
-	if !needComputeNumerator && !needComputeDenominator {
+	if !w.needComputeNumerator && !w.needComputeDenominator {
 		if debug {
 			log.Println("[W] no need compute", item)
 		}
 		return errors.New("no need compute")
 	}
 
-	w.numeratorOperands, w.numeratorOperators, w.numeratorComputeMode = parse(numeratorStr, needComputeNumerator)
-	w.denominatorOperands, w.denominatorOperators, w.denominatorComputeMode = parse(denominatorStr, needComputeDenominator)
+	w.numeratorOperands, w.numeratorOperators, w.numeratorComputeMode = parse(numeratorStr, w.needComputeNumerator)
+	w.denominatorOperands, w.denominatorOperators, w.denominatorComputeMode = parse(denominatorStr, w.needComputeDenominator)
 
 	if !operatorsValid(w.numeratorOperators) || !operatorsValid(w.denominatorOperators) {
 		log.Println("[W] operators invalid", item)
