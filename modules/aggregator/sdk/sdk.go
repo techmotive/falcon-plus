@@ -17,20 +17,32 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
+	"sync"
+
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/common/sdk/requests"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
 	"github.com/toolkits/net/httplib"
-	"time"
 )
 
+var mapGrpID map[int64][]string
+var lock sync.RWMutex
+
 func HostnamesByID(group_id int64) ([]string, error) {
+
+	lock.RLock()
+	if val, ok := mapGrpID[group_id]; ok {
+		lock.RUnlock()
+		return val, nil
+	}
+	lock.RUnlock()
 
 	uri := fmt.Sprintf("%s/api/v1/hostgroup/%d", g.Config().Api.PlusApi, group_id)
 	req, err := requests.CurlPlus(uri, "GET", "aggregator", g.Config().Api.PlusApiToken,
 		map[string]string{}, map[string]string{})
-
 	if err != nil {
 		return []string{}, err
 	}
@@ -50,6 +62,9 @@ func HostnamesByID(group_id int64) ([]string, error) {
 	for _, x := range resp.Hosts {
 		hosts = append(hosts, x.Hostname)
 	}
+	lock.Lock()
+	mapGrpID[group_id] = hosts
+	lock.Unlock()
 	return hosts, nil
 }
 
