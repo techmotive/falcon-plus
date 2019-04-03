@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"math/rand"
 
+	"sync"
+
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 )
 
@@ -81,25 +83,28 @@ func (this Worker) Drop() {
 	close(this.Quit)
 }
 
-var Workers = make(map[string]Worker)
+var WorkersMap sync.Map
 
 func deleteNoUseWorker(m map[string]*g.Cluster) {
 	del := []string{}
-	for key, worker := range Workers {
+	WorkersMap.Range(func(k, v interface{}) bool {
+		key := k.(string)
+		worker := v.(*Worker)
 		if _, ok := m[key]; !ok {
 			worker.Drop()
 			del = append(del, key)
 		}
-	}
+		return true
+	})
 
 	for _, key := range del {
-		delete(Workers, key)
+		WorkersMap.Delete(key)
 	}
 }
 
 func createWorkerIfNeed(m map[string]*g.Cluster) {
 	for key, item := range m {
-		if _, ok := Workers[key]; !ok {
+		if _, ok := WorkersMap.Load(key); !ok {
 			if item.Step <= 0 {
 				log.Println("[W] invalid cluster(step <= 0):", item)
 				continue
@@ -107,7 +112,7 @@ func createWorkerIfNeed(m map[string]*g.Cluster) {
 			go func() {
 				worker := NewWorker(item)
 				if worker.Start() == nil {
-					Workers[key] = worker
+					WorkersMap.Store(key, &worker)
 				}
 			}()
 		}
