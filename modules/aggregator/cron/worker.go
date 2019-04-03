@@ -15,10 +15,11 @@
 package cron
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"time"
 	"fmt"
 	"math/rand"
+	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 )
@@ -27,6 +28,18 @@ type Worker struct {
 	Ticker      *time.Ticker
 	ClusterItem *g.Cluster
 	Quit        chan struct{}
+
+	numeratorOperands      []string
+	numeratorOperators     []string
+	numeratorComputeMode   string
+	denominatorOperands    []string
+	denominatorOperators   []string
+	denominatorComputeMode string
+	hostnames              []string
+	needComputeNumerator   bool
+	needComputeDenominator bool
+	numeratorStr           string
+	denominatorStr         string
 }
 
 func NewWorker(ci *g.Cluster) Worker {
@@ -38,13 +51,19 @@ func NewWorker(ci *g.Cluster) Worker {
 
 func (this Worker) Start() {
 	go func() {
-        fmt.Printf("I sleep for %d seconds then start.(%+v)\n",rand.Intn(this.ClusterItem.Step),this.ClusterItem)
-        time.Sleep(time.Millisecond * time.Duration(rand.Intn(1000*this.ClusterItem.Step)))
-	    this.Ticker = time.NewTicker(time.Duration(this.ClusterItem.Step) * time.Second)
+
+		if WorkerPreRun(&this) != nil {
+			log.Printf("[E] no need compute(%+v)", this.ClusterItem)
+			return
+		}
+
+		fmt.Printf("I sleep for %d seconds then start.(%+v)\n", rand.Intn(this.ClusterItem.Step), this.ClusterItem)
+		time.Sleep(time.Millisecond * time.Duration(rand.Intn(1000*this.ClusterItem.Step)))
+		this.Ticker = time.NewTicker(time.Duration(this.ClusterItem.Step) * time.Second)
 		for {
 			select {
 			case <-this.Ticker.C:
-				WorkerRun(this.ClusterItem)
+				WorkerRun(&this)
 			case <-this.Quit:
 				if g.Config().Debug {
 					log.Println("[I] drop worker", this.ClusterItem)

@@ -15,30 +15,36 @@
 package cron
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/open-falcon/falcon-plus/common/sdk/sender"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/sdk"
+	"github.com/pkg/errors"
 )
 
-func WorkerRun(item *g.Cluster) {
+func WorkerPreRun(w *Worker) error {
+	item := w.ClusterItem
+
 	debug := g.Config().Debug
 	if debug {
 		log.Printf("processing :%+v\n", item)
 	}
+
 	numeratorStr := cleanParam(item.Numerator)
 	denominatorStr := cleanParam(item.Denominator)
 
-	/*	if !expressionValid(numeratorStr) || !expressionValid(denominatorStr) {
-			log.Println("[W] invalid numerator or denominator", item)
-			return
-		}
-	*/
+	if !expressionValid(numeratorStr) || !expressionValid(denominatorStr) {
+		log.Println("[W] invalid numerator or denominator", item)
+		return errors.New("invalid numerator or denominator")
+	}
+	w.numeratorStr = numeratorStr
+	w.denominatorStr = denominatorStr
 
 	needComputeNumerator := needCompute(numeratorStr)
 	needComputeDenominator := needCompute(denominatorStr)
@@ -47,25 +53,35 @@ func WorkerRun(item *g.Cluster) {
 		if debug {
 			log.Println("[W] no need compute", item)
 		}
-		return
+		return errors.New("no need compute")
 	}
 
-	numeratorOperands, numeratorOperators, numeratorComputeMode := parse(numeratorStr, needComputeNumerator)
-	denominatorOperands, denominatorOperators, denominatorComputeMode := parse(denominatorStr, needComputeDenominator)
+	w.numeratorOperands, w.numeratorOperators, w.numeratorComputeMode = parse(numeratorStr, needComputeNumerator)
+	w.denominatorOperands, w.denominatorOperators, w.denominatorComputeMode = parse(denominatorStr, needComputeDenominator)
 
-	if !operatorsValid(numeratorOperators) || !operatorsValid(denominatorOperators) {
+	if !operatorsValid(w.numeratorOperators) || !operatorsValid(w.denominatorOperators) {
 		log.Println("[W] operators invalid", item)
-		return
+		return errors.New("invalid operators")
 	}
 
 	hostnames, err := sdk.HostnamesByID(item.GroupId)
 	if err != nil || len(hostnames) == 0 {
-		return
+		return errors.New("invalid GroupId")
 	}
+	w.hostnames = hostnames
+	return nil
+}
 
+func WorkerRun(w *Worker) {
+	item := w.ClusterItem
+
+	debug := g.Config().Debug
+	if debug {
+		log.Printf("processing :%+v\n", item)
+	}
 	now := time.Now().Unix()
 
-	valueMap, ts, err := queryCounterLast(numeratorOperands, denominatorOperands, hostnames, now-int64(item.Step*2), now)
+	valueMap, ts, err := queryCounterLast(w.numeratorOperands, w.denominatorOperands, w.hostnames, now-int64(item.Step*2), now)
 	if err != nil {
 		log.Println("[E]", err, item)
 		return
@@ -74,12 +90,12 @@ func WorkerRun(item *g.Cluster) {
 	var numerator, denominator float64
 	var validCount int
 
-	for _, hostname := range hostnames {
+	for _, hostname := range w.hostnames {
 		var numeratorVal, denominatorVal float64
 		var err error
 
-		if needComputeNumerator {
-			numeratorVal, err = compute(numeratorOperands, numeratorOperators, numeratorComputeMode, hostname, valueMap)
+		if w.needComputeNumerator {
+			numeratorVal, err = compute(w.numeratorOperands, w.numeratorOperators, w.numeratorComputeMode, hostname, valueMap)
 
 			if debug && err != nil {
 				log.Printf("[W] [hostname:%s] [numerator:%s] id:%d, err:%v", hostname, item.Numerator, item.Id, err)
@@ -92,8 +108,8 @@ func WorkerRun(item *g.Cluster) {
 			}
 		}
 
-		if needComputeDenominator {
-			denominatorVal, err = compute(denominatorOperands, denominatorOperators, denominatorComputeMode, hostname, valueMap)
+		if w.needComputeDenominator {
+			denominatorVal, err = compute(w.denominatorOperands, w.denominatorOperators, w.denominatorComputeMode, hostname, valueMap)
 
 			if debug && err != nil {
 				log.Printf("[W] [hostname:%s] [denominator:%s] id:%d, err:%v", hostname, item.Denominator, item.Id, err)
@@ -114,25 +130,25 @@ func WorkerRun(item *g.Cluster) {
 		validCount += 1
 	}
 
-	if !needComputeNumerator {
-		if numeratorStr == "$#" {
+	if !w.needComputeNumerator {
+		if w.numeratorStr == "$#" {
 			numerator = float64(validCount)
 		} else {
-			numerator, err = strconv.ParseFloat(numeratorStr, 64)
+			numerator, err = strconv.ParseFloat(w.numeratorStr, 64)
 			if err != nil {
-				log.Printf("[E] strconv.ParseFloat(%s) fail %v, id:%d", numeratorStr, err, item.Id)
+				log.Printf("[E] strconv.ParseFloat(%s) fail %v, id:%d", w.numeratorStr, err, item.Id)
 				return
 			}
 		}
 	}
 
-	if !needComputeDenominator {
-		if denominatorStr == "$#" {
+	if !w.needComputeDenominator {
+		if w.denominatorStr == "$#" {
 			denominator = float64(validCount)
 		} else {
-			denominator, err = strconv.ParseFloat(denominatorStr, 64)
+			denominator, err = strconv.ParseFloat(w.denominatorStr, 64)
 			if err != nil {
-				log.Printf("[E] strconv.ParseFloat(%s) fail %v, id:%d", denominatorStr, err, item.Id)
+				log.Printf("[E] strconv.ParseFloat(%s) fail %v, id:%d", w.denominatorStr, err, item.Id)
 				return
 			}
 		}
