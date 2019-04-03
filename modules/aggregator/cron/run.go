@@ -68,7 +68,7 @@ func WorkerPreRun(w *Worker) (err error) {
 
 	errCnt := 0
 	err = errors.New("default")
-	for errCnt < 6 && err != nil {
+	for errCnt < 3 && err != nil {
 		hostnames, err := sdk.HostnamesByID(item.GroupId)
 		if err != nil {
 			errCnt++
