@@ -104,10 +104,12 @@ func createWorkerIfNeed(m map[string]*g.Cluster) {
 				log.Println("[W] invalid cluster(step <= 0):", item)
 				continue
 			}
-			worker := NewWorker(item)
-			if worker.Start() == nil {
-				Workers[key] = worker
-			}
+			go func() {
+				worker := NewWorker(item)
+				if worker.Start() == nil {
+					Workers[key] = worker
+				}
+			}()
 		}
 	}
 }
