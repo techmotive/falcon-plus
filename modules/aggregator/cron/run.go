@@ -31,18 +31,6 @@ import (
 )
 
 func WorkerPreRun(w *Worker) (err error) {
-	errCnt := 0
-	err = errors.New("default")
-	for errCnt < 6 && err != nil {
-		if err = workerPreRun(w); err != nil {
-			errCnt++
-			time.Sleep(time.Duration(errCnt) * time.Second)
-		}
-	}
-	return
-}
-
-func workerPreRun(w *Worker) error {
 	item := w.ClusterItem
 
 	debug := g.Config().Debug
@@ -78,11 +66,21 @@ func workerPreRun(w *Worker) error {
 		return errors.New("invalid operators")
 	}
 
-	hostnames, err := sdk.HostnamesByID(item.GroupId)
-	if err != nil || len(hostnames) == 0 {
-		return fmt.Errorf("invalid GroupId:%d", item.GroupId)
+	errCnt := 0
+	err = errors.New("default")
+	for errCnt < 6 && err != nil {
+		hostnames, err := sdk.HostnamesByID(item.GroupId)
+		if err != nil {
+			errCnt++
+			time.Sleep(time.Duration(errCnt) * time.Second)
+			continue
+		}
+		w.hostnames = hostnames
 	}
-	w.hostnames = hostnames
+	if err != nil || len(w.hostnames) == 0 {
+		return fmt.Errorf("get hostnames fail GroupId:%d", item.GroupId)
+	}
+
 	return nil
 }
 
