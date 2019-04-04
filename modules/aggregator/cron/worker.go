@@ -53,14 +53,15 @@ func NewWorker(ci *g.Cluster) Worker {
 
 func (this Worker) Start() error {
 
+	fmt.Printf("I sleep for %d seconds then start.(%+v)\n", rand.Intn(this.ClusterItem.Step), this.ClusterItem)
+	time.Sleep(time.Millisecond * time.Duration(rand.Intn(1000*this.ClusterItem.Step)))
+
 	if err := WorkerPreRun(&this); err != nil {
 		log.Printf("[E] WorkerPreRun fail(%+v),err:%s", this.ClusterItem, err)
 		return err
 	}
 
 	go func() {
-		fmt.Printf("I sleep for %d seconds then start.(%+v)\n", rand.Intn(this.ClusterItem.Step), this.ClusterItem)
-		time.Sleep(time.Millisecond * time.Duration(rand.Intn(1000*this.ClusterItem.Step)))
 
 		this.Ticker = time.NewTicker(time.Duration(this.ClusterItem.Step) * time.Second)
 		for {
@@ -109,12 +110,12 @@ func createWorkerIfNeed(m map[string]*g.Cluster) {
 				log.Println("[W] invalid cluster(step <= 0):", item)
 				continue
 			}
-
-			worker := NewWorker(item)
-			if worker.Start() == nil {
-				WorkersMap.Store(key, &worker)
-			}
-
+			go func() {
+				worker := NewWorker(item)
+				if worker.Start() == nil {
+					WorkersMap.Store(key, &worker)
+				}
+			}()
 		}
 	}
 }
